@@ -106,4 +106,6 @@
 #define BEEPER_PIN         PC13
 #define LED_PIN            PB2
 
+#define SD_DETECT_PIN      PF12
+
 #define SDSS               -1

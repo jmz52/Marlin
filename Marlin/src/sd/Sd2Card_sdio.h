@@ -39,7 +39,7 @@ class Sd2Card {
     bool readBlock(uint32_t block, uint8_t *dst) { return SDIO_ReadBlock(block, dst); }
     bool writeBlock(uint32_t block, const uint8_t *src) { return SDIO_WriteBlock(block, src); }
 
-    uint32_t cardSize() { return 0; }
+    uint32_t cardSize() { return SDIO_GetCardSize(void); }
 };
 
 #endif // SDIO_SUPPORT

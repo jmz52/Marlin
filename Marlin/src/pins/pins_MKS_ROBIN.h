@@ -96,6 +96,10 @@
 
 #define FAN_PIN            PA7   // FAN
 
+#define BTN_ENC            PB3  // Pin is not conencted. Real pin is needed to enable encoder's push button functionality used by touch screen
+#define BTN_EN1            -1
+#define BTN_EN2            -1
+
 /**
  * Note: MKS Robin board is using SPI2 interface. Make sure your stm32duino library is configured accordingly
  */
@@ -120,6 +124,7 @@
 #define LCD_BACKLIGHT_PIN  PG11
 #define FSMC_CS_PIN        PG12  // NE4
 #define FSMC_RS_PIN        PF0   // A0
+#define TOUCH_CS           PB1
 
 #define SD_DETECT_PIN      PF12
 #define SDSS               -1

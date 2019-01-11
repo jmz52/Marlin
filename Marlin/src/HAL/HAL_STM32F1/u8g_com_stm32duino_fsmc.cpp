@@ -34,18 +34,32 @@
 #include "U8glib.h"
 #include "libmaple/fsmc.h"
 #include "libmaple/gpio.h"
+#include "libmaple/dma.h"
 #include "boards.h"
 
-#define LCD_READ_ID     0x04   /* Read display identification information */
+struct LCD_IO {
+  uint32_t id;
+  void (*writeRegister)(uint16_t reg);
+  uint16_t (*readData)(void);
+  void (*writeData)(uint16_t data);
+  void (*writeMultiple)(uint16_t data, uint32_t count);
+  void (*writeSequence)(uint16_t *data, uint16_t length);
+  void (*setWindow)(uint16_t Xmin, uint16_t Ymin, uint16_t Xmax, uint16_t Ymax);
+};
 
 /* Timing configuration */
 #define FSMC_ADDRESS_SETUP_TIME   15  // AddressSetupTime
 #define FSMC_DATA_SETUP_TIME      15  // DataSetupTime
 
+#define FSMC_DMA_DEV        DMA2
+#define FSMC_DMA_CHANNEL    DMA_CH4
+
 void LCD_IO_Init(uint8_t cs, uint8_t rs);
-void LCD_IO_WriteData(uint16_t RegValue);
-void LCD_IO_WriteReg(uint8_t Reg);
-uint32_t LCD_IO_ReadData(uint16_t RegValue, uint8_t ReadSize);
+void LCD_IO_WriteReg(uint16_t reg);
+uint16_t LCD_IO_ReadData(void);
+void LCD_IO_WriteData(uint16_t data);
+void LCD_IO_WriteMultiple(uint16_t data, uint32_t count);
+void LCD_IO_WriteSequence(uint16_t *data, uint16_t length);
 
 static uint8_t msgInitCount = 2; // Ignore all messages until 2nd U8G_COM_MSG_INIT
 
@@ -55,42 +69,30 @@ uint8_t u8g_com_stm32duino_fsmc_fn(u8g_t *u8g, uint8_t msg, uint8_t arg_val, voi
     if (msgInitCount) return -1;
   }
 
-  static uint8_t isCommand;
-
   switch(msg) {
     case U8G_COM_MSG_STOP:
       break;
     case U8G_COM_MSG_INIT:
       u8g_SetPIOutput(u8g, U8G_PI_RESET);
 
+      dma_init(FSMC_DMA_DEV);
+      dma_disable(FSMC_DMA_DEV, FSMC_DMA_CHANNEL);
+      dma_set_priority(FSMC_DMA_DEV, FSMC_DMA_CHANNEL, DMA_PRIORITY_HIGH);
+
       LCD_IO_Init(u8g->pin_list[U8G_PI_CS], u8g->pin_list[U8G_PI_A0]);
       u8g_Delay(100);
 
-      if (arg_ptr != NULL)
-        *((uint32_t *)arg_ptr) = LCD_IO_ReadData(LCD_READ_ID, 3);
-
-      isCommand = 0;
-      break;
-
-    case U8G_COM_MSG_ADDRESS:           // define cmd (arg_val = 0) or data mode (arg_val = 1)
-      isCommand = arg_val == 0 ? 1 : 0;
+      if (arg_ptr != NULL) {
+        ((LCD_IO *)arg_ptr)->writeRegister = LCD_IO_WriteReg;
+        ((LCD_IO *)arg_ptr)->readData = LCD_IO_ReadData;
+        ((LCD_IO *)arg_ptr)->writeData = LCD_IO_WriteData;
+        ((LCD_IO *)arg_ptr)->writeMultiple = LCD_IO_WriteMultiple;
+        ((LCD_IO *)arg_ptr)->writeSequence = LCD_IO_WriteSequence;
+      }
       break;
 
     case U8G_COM_MSG_RESET:
       u8g_SetPILevel(u8g, U8G_PI_RESET, arg_val);
-      break;
-
-    case U8G_COM_MSG_WRITE_BYTE:
-      if (isCommand)
-        LCD_IO_WriteReg(arg_val);
-      else
-        LCD_IO_WriteData((uint16_t)arg_val);
-      break;
-
-    case U8G_COM_MSG_WRITE_SEQ:
-
-      for (uint8_t i = 0; i < arg_val; i += 2)
-        LCD_IO_WriteData(*(uint16_t *)(((uint32_t)arg_ptr) + i));
       break;
   }
   return 1;
@@ -226,29 +228,42 @@ void LCD_IO_Init(uint8_t cs, uint8_t rs) {
   LCD = (LCD_CONTROLLER_TypeDef*)controllerAddress;
 }
 
-void LCD_IO_WriteData(uint16_t RegValue) {
-	LCD->RAM = RegValue;
+void LCD_IO_WriteReg(uint16_t reg) {
+	LCD->REG = reg;
 	__DSB();
 }
 
-void LCD_IO_WriteReg(uint8_t Reg) {
-	LCD->REG = (uint16_t)Reg;
-	__DSB();
+uint16_t LCD_IO_ReadData(void) {
+	return LCD->RAM;
 }
 
-uint32_t LCD_IO_ReadData(uint16_t RegValue, uint8_t ReadSize) {
-	volatile uint32_t data;
-	LCD->REG = (uint16_t)RegValue;
-	__DSB();
+void LCD_IO_WriteData(uint16_t data) {
+  LCD->RAM = data;
+  __DSB();
+}
 
-	data = LCD->RAM; // dummy read
-	data = LCD->RAM & 0x00FF;
+void LCD_IO_WriteMultiple(uint16_t data, uint32_t count) {
+  while (count > 0) {
+    dma_setup_transfer(FSMC_DMA_DEV, FSMC_DMA_CHANNEL, &data, DMA_SIZE_16BITS, &LCD->RAM, DMA_SIZE_16BITS, DMA_MEM_2_MEM);
+    dma_set_num_transfers(FSMC_DMA_DEV, FSMC_DMA_CHANNEL, count > 65535 ? 65535 : count);
+    dma_clear_isr_bits(FSMC_DMA_DEV, FSMC_DMA_CHANNEL);
+    dma_enable(FSMC_DMA_DEV, FSMC_DMA_CHANNEL);
 
-	while (--ReadSize) {
-		data <<= 8;
-		data |= (LCD->RAM & 0x00FF);
-	}
-	return (uint32_t)data;
+    while ((dma_get_isr_bits(FSMC_DMA_DEV, FSMC_DMA_CHANNEL) & 0x0A) == 0) {};
+    dma_disable(FSMC_DMA_DEV, FSMC_DMA_CHANNEL);
+
+    count = count > 65535 ? count - 65535 : 0;
+  }
+}
+
+void LCD_IO_WriteSequence(uint16_t *data, uint16_t length) {
+  dma_setup_transfer(FSMC_DMA_DEV, FSMC_DMA_CHANNEL, data, DMA_SIZE_16BITS, &LCD->RAM, DMA_SIZE_16BITS, DMA_MEM_2_MEM | DMA_PINC_MODE);
+  dma_set_num_transfers(FSMC_DMA_DEV, FSMC_DMA_CHANNEL, length);
+  dma_clear_isr_bits(FSMC_DMA_DEV, FSMC_DMA_CHANNEL);
+  dma_enable(FSMC_DMA_DEV, FSMC_DMA_CHANNEL);
+
+  while ((dma_get_isr_bits(FSMC_DMA_DEV, FSMC_DMA_CHANNEL) & 0x0A) == 0) {};
+  dma_disable(FSMC_DMA_DEV, FSMC_DMA_CHANNEL);
 }
 
 #endif // STM32F1 || STM32F1xx

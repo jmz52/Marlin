@@ -36,10 +36,15 @@
 #define XPT2046_SPI_CLOCK       SPI_CLOCK_DIV2
 
 #define XPT2046_Z1_TRESHHOLD    10
-#define XPT2046_X_CALIBRATION   11958
-#define XPT2046_X_OFFSET        32
-#define XPT2046_Y_CALIBRATION   8776
-#define XPT2046_Y_OFFSET        18
+#define XPT2046_X_CALIBRATION   12013
+#define XPT2046_X_OFFSET        -32
+#define XPT2046_Y_CALIBRATION   -8711
+#define XPT2046_Y_OFFSET        256
 
-uint16_t getInTouch(uint8_t coordinate);
 uint8_t xpt2046_read_buttons();
+uint16_t getTouchCoordinate(uint8_t coordinate);
+bool getTouchPoint(uint16_t *x, uint16_t *y);
+
+inline bool isTouched() { return getTouchCoordinate(XPT2046_Z1) >= XPT2046_Z1_TRESHHOLD; }
+inline void waitForRelease(void) { while (isTouched()) {}; }
+inline void waitForTouch(uint16_t *x, uint16_t *y) { while(!getTouchPoint(x, y)) {}; }

@@ -33,6 +33,7 @@
 
 #include "HAL.h"
 #include <STM32ADC.h>
+#include <SPI.h>
 
 // --------------------------------------------------------------------------
 // Externals
@@ -195,6 +196,9 @@ static void NVIC_SetPriorityGrouping(uint32_t PriorityGroup) {
 
 void HAL_init(void) {
   NVIC_SetPriorityGrouping(0x3);
+#if SPI_MODULE
+  SPI.setModule(SPI_MODULE);
+#endif
 }
 
 /* VGPV Done with defines

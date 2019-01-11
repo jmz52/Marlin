@@ -40,6 +40,11 @@
 #define DISABLE_DEBUG
 
 //
+// Note: MKS Robin board is using SPI2 interface.
+//
+#define SPI_MODULE 2
+
+//
 // Servos
 //
 #define SERVO0_PIN         PC3   // XS1 - 5
@@ -96,13 +101,10 @@
 
 #define FAN_PIN            PA7   // FAN
 
-#define BTN_ENC            PB3  // Pin is not conencted. Real pin is needed to enable encoder's push button functionality used by touch screen
+#define BTN_ENC            PB3  // Pin is not connected. Real pin is needed to enable encoder's push button functionality used by touch screen
 #define BTN_EN1            -1
 #define BTN_EN2            -1
 
-/**
- * Note: MKS Robin board is using SPI2 interface. Make sure your stm32duino library is configured accordingly
- */
 //#define MAX6675_SS_PIN     PE5  // TC1 - CS1
 //#define MAX6675_SS_PIN     PE6  // TC2 - CS2
 
@@ -127,4 +129,3 @@
 #define TOUCH_CS           PB1
 
 #define SD_DETECT_PIN      PF12
-#define SDSS               -1

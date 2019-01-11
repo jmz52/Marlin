@@ -36,10 +36,18 @@
 #define XPT2046_SPI_CLOCK       SPI_CLOCK_DIV2
 
 #define XPT2046_Z1_TRESHHOLD    10
-#define XPT2046_X_CALIBRATION   12013
-#define XPT2046_X_OFFSET        -32
-#define XPT2046_Y_CALIBRATION   -8711
-#define XPT2046_Y_OFFSET        256
+
+/* MKS Robin TFT v2.0 */
+#define XPT2046_X_CALIBRATION    12013
+#define XPT2046_X_OFFSET           -32
+#define XPT2046_Y_CALIBRATION    -8711
+#define XPT2046_Y_OFFSET           256
+
+/* MKS Robin TFT v1.1 */
+//#define XPT2046_X_CALIBRATION   -11792
+//#define XPT2046_X_OFFSET           342
+//#define XPT2046_Y_CALIBRATION     8947
+//#define XPT2046_Y_OFFSET           -19
 
 uint8_t xpt2046_read_buttons();
 uint16_t getTouchCoordinate(uint8_t coordinate);

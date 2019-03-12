@@ -66,8 +66,8 @@
 #define E0_DIR_PIN         PD0
 #define E0_ENABLE_PIN      PB9
 
-#define E1_STEP_PIN        PE1
-#define E1_DIR_PIN         PE0
+#define E1_STEP_PIN        PE0
+#define E1_DIR_PIN         PE1
 #define E1_ENABLE_PIN      PB8
 
 //
@@ -125,8 +125,8 @@
 
 //#define LCD_PINS_DC      LCD_PINS_D5
 //#define LCD_PINS_RS      LCD_PINS_D6
-//#define DOGLCD_CS        LCD_PINS_RS
-//#define DOGLCD_A0        LCD_PINS_DC
+#define DOGLCD_CS        LCD_PINS_RS
+#define DOGLCD_A0        LCD_PINS_D6
 
 /*
 //

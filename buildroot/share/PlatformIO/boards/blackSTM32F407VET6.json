@@ -16,7 +16,7 @@
     ],
     "ldscript": "stm32f407xe.ld",
     "mcu": "stm32f407vet6",
-    "variant": "BLACK_F407VE"
+    "variant": "MARLIN_F407VE"
   },
   "debug": {
     "jlink_device": "STM32F407VE",

@@ -2914,9 +2914,9 @@ void Temperature::isr() {
           #if ENABLED(SHOW_TEMP_ADC_VALUES)
             , rawChamberTemp()
           #endif
-          #if NUM_SERIAL > 1
-            , port
-          #endif
+//          #if NUM_SERIAL > 1
+//            , port
+//          #endif
         , -2 // CHAMBER
       );
       #else
@@ -2924,9 +2924,9 @@ void Temperature::isr() {
           #if ENABLED(SHOW_TEMP_ADC_VALUES)
             , rawChamberTemp()
           #endif
-          #if NUM_SERIAL > 1
-            , port
-          #endif
+//          #if NUM_SERIAL > 1
+//            , port
+//          #endif
           , -2 // CHAMBER
         );
       #endif // HAS_HEATED_CHAMBER

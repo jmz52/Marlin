@@ -20,15 +20,17 @@
  *
  */
 
+#pragma once
+
 #if !defined(STM32F4) && !defined(STM32F4xx)
   #error "Oops! Select an STM32F4 board in 'Tools > Board.'"
 #endif
 
 #define DEFAULT_MACHINE_NAME "STM32F407VET6"
-#define BOARD_NAME "Black STM32F4VET6"
+//#define BOARD_NAME "Black STM32F4VET6"
 
 //#define I2C_EEPROM
-#define E2END 0xFFF // EEPROM end address (4kB)
+//#define E2END 0xFFF // EEPROM end address (4kB)
 
 // Ignore temp readings during develpment.
 //#define BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
@@ -73,6 +75,7 @@
 //
 // Temperature Sensors
 //
+
 #define TEMP_0_PIN         PC0  // T0
 #define TEMP_1_PIN         PC1  // T1
 #define TEMP_BED_PIN       PC2  // TB

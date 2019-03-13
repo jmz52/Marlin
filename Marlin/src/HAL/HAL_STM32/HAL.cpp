@@ -36,6 +36,8 @@
 #if ENABLED(EEPROM_EMULATED_WITH_SRAM)
   #if STM32F7xx
     #include "stm32f7xx_ll_pwr.h"
+  #elif STM32F4xx
+    #include "stm32f4xx_ll_pwr.h"
   #else
     #error "EEPROM_EMULATED_WITH_SRAM is currently only supported for STM32F7xx"
   #endif

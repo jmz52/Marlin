@@ -31,12 +31,7 @@
 
 //#define I2C_EEPROM
 //#define E2END 0x1FFF // EEPROM end address (8kB)
-
 #define EEPROM_EMULATED_WITH_SRAM
-//#define E2END 0xFFF // EEPROM end address (4kB)
-
-// Ignore temp readings during develpment.
-//#define BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
 
 #if HOTENDS > 2 || E_STEPPERS > 2
   #error "Black STM32F4VET6 supports up to 2 hotends / E-steppers."

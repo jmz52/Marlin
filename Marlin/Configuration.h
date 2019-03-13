@@ -545,9 +545,9 @@
  * details can be tuned in Configuration_adv.h
  */
 
-//#define THERMAL_PROTECTION_HOTENDS // Enable thermal protection for all extruders
-//#define THERMAL_PROTECTION_BED     // Enable thermal protection for the heated bed
-//#define THERMAL_PROTECTION_CHAMBER // Enable thermal protection for the heated chamber
+#define THERMAL_PROTECTION_HOTENDS // Enable thermal protection for all extruders
+#define THERMAL_PROTECTION_BED     // Enable thermal protection for the heated bed
+#define THERMAL_PROTECTION_CHAMBER // Enable thermal protection for the heated chamber
 
 //===========================================================================
 //============================= Mechanical Settings =========================
@@ -1854,8 +1854,6 @@
 // SSD1306 OLED full graphics generic display
 //
 //#define U8GLIB_SSD1306
-
-//#define U8GLIB_SH1106
 
 //
 // SAV OLEd LCD module support using either SSD1306 or SH1106 based LCD modules

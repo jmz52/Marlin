@@ -516,7 +516,7 @@ void GcodeSuite::process_parsed_command(
         case 217: M217(); break;                                  // M217: Set filament swap parameters
       #endif
 
-      #if HOTENDS > 1
+      #if HAS_HOTEND_OFFSET
         case 218: M218(); break;                                  // M218: Set a tool offset
       #endif
 
@@ -650,7 +650,7 @@ void GcodeSuite::process_parsed_command(
         case 603: M603(); break;                                  // M603: Configure Filament Change
       #endif
 
-      #if ENABLED(DUAL_X_CARRIAGE) || ENABLED(DUAL_NOZZLE_DUPLICATION_MODE)
+      #if HAS_DUPLICATION_MODE
         case 605: M605(); break;                                  // M605: Set Dual X Carriage movement mode
       #endif
 

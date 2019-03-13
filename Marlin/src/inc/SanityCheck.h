@@ -345,6 +345,8 @@
   #error "TMC_Z_CALIBRATION has been deprecated in favor of Z_STEPPER_AUTO_ALIGN. Please update your configuration."
 #elif defined(Z_MIN_PROBE_ENDSTOP)
   #error "Z_MIN_PROBE_ENDSTOP is no longer required. Please remove it from Configuration.h."
+#elif defined(DUAL_NOZZLE_DUPLICATION_MODE)
+  #error "DUAL_NOZZLE_DUPLICATION_MODE is now MULTI_NOZZLE_DUPLICATION. Please update your configuration."
 #endif
 
 #define BOARD_MKS_13     -47
@@ -391,7 +393,7 @@
   #elif RX_BUFFER_SIZE && (RX_BUFFER_SIZE < 2 || !IS_POWER_OF_2(RX_BUFFER_SIZE))
     #error "RX_BUFFER_SIZE must be a power of 2 greater than 1."
   #elif TX_BUFFER_SIZE && (TX_BUFFER_SIZE < 2 || TX_BUFFER_SIZE > 256 || !IS_POWER_OF_2(TX_BUFFER_SIZE))
-    #error "TX_BUFFER_SIZE must be 0, a power of 2 greater than 1, and no greater than 256."
+    #error "TX_BUFFER_SIZE must be 0 or a power of 2 between 1 and 256."
   #endif
 #elif ENABLED(SERIAL_XON_XOFF) || ENABLED(SERIAL_STATS_MAX_RX_QUEUED) || ENABLED(SERIAL_STATS_DROPPED_RX)
   #error "SERIAL_XON_XOFF and SERIAL_STATS_* features not supported on USB-native AVR devices."
@@ -1444,19 +1446,19 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
 #endif
 
 /**
- * Basic 2-nozzle duplication mode
+ * Basic multi hotend duplication mode
  */
-#if ENABLED(DUAL_NOZZLE_DUPLICATION_MODE)
-  #if HOTENDS != 2
-    #error "DUAL_NOZZLE_DUPLICATION_MODE requires exactly 2 hotends."
+#if ENABLED(MULTI_NOZZLE_DUPLICATION)
+  #if HOTENDS < 2
+    #error "MULTI_NOZZLE_DUPLICATION requires 2 or more hotends."
   #elif ENABLED(DUAL_X_CARRIAGE)
-    #error "DUAL_NOZZLE_DUPLICATION_MODE is incompatible with DUAL_X_CARRIAGE."
+    #error "MULTI_NOZZLE_DUPLICATION is incompatible with DUAL_X_CARRIAGE."
   #elif ENABLED(SINGLENOZZLE)
-    #error "DUAL_NOZZLE_DUPLICATION_MODE is incompatible with SINGLENOZZLE."
+    #error "MULTI_NOZZLE_DUPLICATION is incompatible with SINGLENOZZLE."
   #elif ENABLED(MIXING_EXTRUDER)
-    #error "DUAL_NOZZLE_DUPLICATION_MODE is incompatible with MIXING_EXTRUDER."
+    #error "MULTI_NOZZLE_DUPLICATION is incompatible with MIXING_EXTRUDER."
   #elif ENABLED(SWITCHING_EXTRUDER)
-    #error "DUAL_NOZZLE_DUPLICATION_MODE is incompatible with SWITCHING_EXTRUDER."
+    #error "MULTI_NOZZLE_DUPLICATION is incompatible with SWITCHING_EXTRUDER."
   #endif
 #endif
 
@@ -2014,7 +2016,7 @@ static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
 #endif
 
 #if ENABLED(FAST_PWM_FAN) && !(defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM))
-  #error "FAST_PWM_FAN only supported by 8 bit CPUs."
+  #error "FAST_PWM_FAN is only supported for ARDUINO and ARDUINO_ARCH_SAM."
 #endif
 
 #if ENABLED(Z_STEPPER_AUTO_ALIGN)

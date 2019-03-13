@@ -193,20 +193,7 @@ void clean_up_after_endstop_or_probe_move();
 // Homing
 //
 
-#define HAS_AXIS_UNHOMED_ERR (                                                     \
-         ENABLED(Z_PROBE_ALLEN_KEY)                                                \
-      || ENABLED(Z_PROBE_SLED)                                                     \
-      || HAS_PROBING_PROCEDURE                                                     \
-      || HOTENDS > 1                                                               \
-      || ENABLED(NOZZLE_CLEAN_FEATURE)                                             \
-      || ENABLED(NOZZLE_PARK_FEATURE)                                              \
-      || (ENABLED(ADVANCED_PAUSE_FEATURE) && ENABLED(HOME_BEFORE_FILAMENT_CHANGE)) \
-      || HAS_M206_COMMAND                                                          \
-    ) || ENABLED(NO_MOTION_BEFORE_HOMING)
-
-#if HAS_AXIS_UNHOMED_ERR
-  bool axis_unhomed_error(const bool x=true, const bool y=true, const bool z=true);
-#endif
+bool axis_unhomed_error(const bool x=true, const bool y=true, const bool z=true);
 
 #if ENABLED(NO_MOTION_BEFORE_HOMING)
   #define MOTION_CONDITIONS (IsRunning() && !axis_unhomed_error())
@@ -326,11 +313,15 @@ void homeaxis(const AxisEnum axis);
 #endif
 
 /**
- * Dual X Carriage / Dual Nozzle
+ * Duplication mode
  */
-#if ENABLED(DUAL_X_CARRIAGE) || ENABLED(DUAL_NOZZLE_DUPLICATION_MODE)
-  extern bool extruder_duplication_enabled,       // Used in Dual X mode 2
-              scaled_duplication_mode;            // Used in Dual X mode 3
+#if HAS_DUPLICATION_MODE
+  extern bool extruder_duplication_enabled;       // Used in Dual X mode 2
+              //scaled_duplication_mode;            // Used in Dual X mode 3
+#endif
+
+#if ENABLED(MULTI_NOZZLE_DUPLICATION) && HOTENDS > 2
+  uint8_t duplication_e_mask;
 #endif
 
 /**
@@ -359,7 +350,7 @@ void homeaxis(const AxisEnum axis);
 
   FORCE_INLINE int x_home_dir(const uint8_t extruder) { return extruder ? X2_HOME_DIR : X_HOME_DIR; }
 
-#elif ENABLED(DUAL_NOZZLE_DUPLICATION_MODE)
+#elif ENABLED(MULTI_NOZZLE_DUPLICATION)
 
   enum DualXMode : char {
     DXC_DUPLICATION_MODE = 2

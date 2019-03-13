@@ -530,7 +530,7 @@ namespace ExtUI {
     }
   #endif // HAS_BED_PROBE
 
-  #if HOTENDS > 1
+  #if HAS_HOTEND_OFFSET
 
     float getNozzleOffset_mm(const axis_t axis, const extruder_t extruder) {
       if (extruder - E0 >= HOTENDS) return 0;
@@ -552,7 +552,7 @@ namespace ExtUI {
       HOTEND_LOOP() hotend_offset[axis][e] -= offs;
     }
 
-  #endif // HOTENDS > 1
+  #endif // HAS_HOTEND_OFFSET
 
   #if ENABLED(BACKLASH_GCODE)
     float getAxisBacklash_mm(const axis_t axis)       { return backlash_distance_mm[axis]; }
@@ -576,6 +576,27 @@ namespace ExtUI {
     const duration_t elapsed = print_job_timer.duration();
     return elapsed.value;
   }
+
+  #if HAS_LEVELING
+    bool getLevelingActive() { return planner.leveling_active; }
+    void setLevelingActive(const bool state) { set_bed_leveling_enabled(state) }
+    #if HAS_MESH
+      bool getMeshValid() { return leveling_is_valid(); }
+      bed_mesh_t getMeshArray() { return Z_VALUES; }
+      void setMeshPoint(const uint8_t xpos, const uint8_t ypos, const float zoff) {
+        if (WITHIN(xpos, 0, GRID_MAX_POINTS_X) && WITHIN(ypos, 0, GRID_MAX_POINTS_Y)) {
+          Z_VALUES(xpos, ypos) = zoff;
+          #if ENABLED(ABL_BILINEAR_SUBDIVISION)
+            bed_level_virt_interpolate();
+          #endif
+        }
+      }
+    #endif
+  #endif
+
+  #if ENABLED(HOST_PROMPT_SUPPORT)
+    void setHostResponse(const uint8_t response) { host_response_handler(response); }
+  #endif
 
   #if ENABLED(PRINTCOUNTER)
     char* getTotalPrints_str(char buffer[21])    { strcpy(buffer,i16tostr3left(print_job_timer.getStats().totalPrints));    return buffer; }
@@ -609,7 +630,7 @@ namespace ExtUI {
     const int16_t e = heater - H0;
     #if HAS_HEATED_BED
       if (heater == BED)
-        thermalManager.setTargetBed(clamp(value, 0, BED_MAXTEMP - 15));
+        thermalManager.setTargetBed(clamp(value, 0, BED_MAXTEMP - 10));
       else
     #endif
         thermalManager.setTargetHotend(clamp(value, 0, heater_maxtemp[e] - 15), e);

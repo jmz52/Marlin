@@ -75,7 +75,6 @@
 //
 // Temperature Sensors
 //
-
 #define TEMP_0_PIN         PC0  // T0
 #define TEMP_1_PIN         PC1  // T1
 #define TEMP_BED_PIN       PC2  // TB
@@ -93,10 +92,10 @@
 #define FAN2_PIN           PE13 // Fan2
 #define FAN3_PIN           PE14 // Fan3
 
+
 //
 // Servos
 //
-
 #define SERVO0_PIN         PC6
 #define SERVO1_PIN         PC7
 
@@ -104,7 +103,6 @@
 #define LED_PIN            PA6
 //#define LED_PIN            PA7
 
-//#define SS_PIN             PB12
 #define SDSS               PB12
 #define KILL_PIN           PB1
 
@@ -126,9 +124,7 @@
 #define BTN_EN1            PD4
 #define BTN_EN2            PD13
 
-//#define LCD_PINS_DC      LCD_PINS_D5
-//#define LCD_PINS_RS      LCD_PINS_D6
-#define DOGLCD_CS        LCD_PINS_RS
+#define DOGLCD_CS        LCD_PINS_D5
 #define DOGLCD_A0        LCD_PINS_D6
 
 /*

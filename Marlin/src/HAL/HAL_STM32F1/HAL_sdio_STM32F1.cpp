@@ -73,10 +73,11 @@ bool SDIO_Init(void) {
 
   sdio_set_dbus_width(SDIO_CLKCR_WIDBUS_4BIT);
   sdio_set_clock(SDIO_CLOCK);
+
   return true;
 }
 
-bool SDIO_ReadBlock(uint32_t blockAddress, uint8_t *data) {
+bool SDIO_ReadBlock_DMA(uint32_t blockAddress, uint8_t *data) {
   if (SDIO_GetCardState() != SDIO_CARD_TRANSFER) return false;
   if (blockAddress >= SdCard.LogBlockNbr) return false;
   if ((0x03 & (uint32_t)data)) return false; // misaligned data
@@ -100,12 +101,26 @@ bool SDIO_ReadBlock(uint32_t blockAddress, uint8_t *data) {
 
   dma_disable(SDIO_DMA_DEV, SDIO_DMA_CHANNEL);
 
+  if (SDIO->STA & SDIO_STA_RXDAVL) {
+    while (SDIO->STA & SDIO_STA_RXDAVL) (void) SDIO->FIFO;
+    SDIO_CLEAR_FLAG(SDIO_ICR_CMD_FLAGS | SDIO_ICR_DATA_FLAGS);
+    return false;
+  }
+
   if (SDIO_GET_FLAG(SDIO_STA_TRX_ERROR_FLAGS)) {
     SDIO_CLEAR_FLAG(SDIO_ICR_CMD_FLAGS | SDIO_ICR_DATA_FLAGS);
     return false;
   }
   SDIO_CLEAR_FLAG(SDIO_ICR_CMD_FLAGS | SDIO_ICR_DATA_FLAGS);
   return true;
+}
+
+bool SDIO_ReadBlock(uint32_t blockAddress, uint8_t *data) {
+  uint32_t retries = 3;
+  while (retries--) {
+    if (SDIO_ReadBlock_DMA(blockAddress, data)) return true;
+  }
+  return false;
 }
 
 bool SDIO_WriteBlock(uint32_t blockAddress, const uint8_t *data) {

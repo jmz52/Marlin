@@ -118,14 +118,23 @@
  * because Marlin uses the reset as a failsafe to revive a glitchy LCD.
  */
 
-#define LCD_RESET_PIN                       PC4   // pin 33
-#define LCD_BACKLIGHT_PIN                   PD12  // pin 59
-#define FSMC_CS_PIN                         PD7   // pin 88 = FSMC_NE1
-#define FSMC_RS_PIN                         PD11  // pin 58 A16 Register. Only one address needed
+#ifdef ARDUINO_ARCH_STM32F1
+  // HAL STM32F1 - mapple
+  #define LCD_RESET_PIN                     PC4   // pin 33
+  #define LCD_BACKLIGHT_PIN                 PD12  // pin 59
+  #define FSMC_CS_PIN                       PD7   // pin 88 = FSMC_NE1
+  #define FSMC_RS_PIN                       PD11  // pin 58 A16 Register. Only one address needed
 
-#define LCD_USE_DMA_FSMC                          // Use DMA transfers to send data to the TFT
-#define FSMC_DMA_DEV                        DMA2
-#define FSMC_DMA_CHANNEL                 DMA_CH5
+  #define LCD_USE_DMA_FSMC                        // Use DMA transfers to send data to the TFT
+  #define FSMC_DMA_DEV                      DMA2
+  #define FSMC_DMA_CHANNEL                  DMA_CH5
+  #else
+  // HAL STM32 - STM32 Core
+  #define TFT_RESET_PIN                     PC4
+  #define TFT_BACKLIGHT_PIN                 PD12
+  #define TFT_CS_PIN                        PD7   // NE1
+  #define TFT_RS_PIN                        PD11  // A16
+#endif
 
 #define DOGLCD_MOSI                         -1    // Prevent auto-define by Conditionals_post.h
 #define DOGLCD_SCK                          -1
@@ -135,7 +144,7 @@
  * mixed up MOSI and MISO pins. SPI is managed in SW, and needs pins
  * declared below.
  */
-#if ENABLED(TOUCH_BUTTONS)
+#if ENABLED(TOUCH_SCREEN) || ENABLED(TOUCH_BUTTONS)
   #define TOUCH_CS_PIN                      PB12  // pin 51 SPI2_NSS
   #define TOUCH_SCK_PIN                     PB13  // pin 52
   #define TOUCH_MOSI_PIN                    PB14  // pin 53

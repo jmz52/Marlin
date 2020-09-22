@@ -23,7 +23,7 @@
 
 /**
  * STM32F407VET6 with RAMPS-like shield
- * 'Black' STM32F407VET6 board - https://www.stm32duino.com/viewtopic.php?t=485
+ * 'Black' STM32F407VET6 board - https://stm32-base.org/boards/STM32F407VET6-STM32-F4VE-V2.0
  * Shield - https://github.com/jmz52/Hardware
  */
 
@@ -115,8 +115,18 @@
 //
 // LCD / Controller
 //
-//#define SD_DETECT_PIN                     PC5
-//#define SD_DETECT_PIN                     PA8   // SDIO SD_DETECT_PIN, external SDIO card reader only
+
+/**
+ *                _____                                             _____
+ * (Abort)   PB1 | · · | GND                                    5V | · · | GND
+ *         RESET | · · | PC5 (SD_DETECT)             (LCD_D7)  PE8 | · · | PD1  (LCD_D6)
+ *  (MOSI)  PB15 | · · | PD13(BTN_EN2)               (LCD_D5) PE12 | · · | PE10 (LCD_D4)
+ * (SD_SS)  PD12 | · · | PD4 (BTN_EN1)               (LCD_RS) PE15 | · · | PD8  (LCD_EN)
+ *   (SCK)  PB13 | · · | PB14 (MISO)                 (BTN_ENC) PD9 | · · | PD10 (BEEPER)
+ *                -----                                             -----
+ *                EXP2                                              EXP1
+ */
+
 
 #define BEEPER_PIN                          PD10
 #define LCD_PINS_RS                         PE15
@@ -129,8 +139,19 @@
 #define BTN_EN1                             PD4
 #define BTN_EN2                             PD13
 
-#define DOGLCD_CS                    LCD_PINS_D5
-#define DOGLCD_A0                    LCD_PINS_D6
+#define DOGLCD_CS                           LCD_PINS_D5
+#define DOGLCD_A0                           LCD_PINS_D6
+
+#define TFT_CS_PIN                          LCD_PINS_ENABLE
+#define TFT_A0_PIN                          LCD_PINS_RS
+#define TFT_SCK_PIN                         PB13  // SPI2_SCK
+#define TFT_MISO_PIN                        PB14  // SPI2_MISO
+#define TFT_MOSI_PIN                        PB15  // SPI2_MOSI
+
+#define TOUCH_CS_PIN                        LCD_PINS_D5 // PE12
+#define TOUCH_SCK_PIN                       PB13  // SPI2_SCK
+#define TOUCH_MISO_PIN                      PB14  // SPI2_MISO
+#define TOUCH_MOSI_PIN                      PB15  // SPI2_MOSI
 
 //
 // Onboard SD support
@@ -143,17 +164,25 @@
 #define SDIO_CMD_PIN                        PD2
 
 #ifndef SDCARD_CONNECTION
-  #define SDCARD_CONNECTION              ONBOARD
+  #define SDCARD_CONNECTION                 ONBOARD
 #endif
 
 #if SD_CONNECTION_IS(ONBOARD)
-  #define SDIO_SUPPORT                            // Use SDIO for onboard SD
+  //#define SDIO_SUPPORT                            // Use SDIO for onboard SD
 
   #ifndef SDIO_SUPPORT
     #define SOFTWARE_SPI                          // Use soft SPI for onboard SD
-    #define SDSS                     SDIO_D3_PIN
-    #define SCK_PIN                  SDIO_CK_PIN
-    #define MISO_PIN                 SDIO_D0_PIN
-    #define MOSI_PIN                SDIO_CMD_PIN
+    #define SDSS                            SDIO_D3_PIN
+    #define SCK_PIN                         SDIO_CK_PIN
+    #define MISO_PIN                        SDIO_D0_PIN
+    #define MOSI_PIN                        SDIO_CMD_PIN
   #endif
+
+  //#define SD_DETECT_PIN                   PA8   // SDIO SD_DETECT_PIN, external SDIO card reader only
+#elif SD_CONNECTION_IS(LCD)
+  #define SS_PIN                            PD12
+  #define SCK_PIN                           PB13  // SPI2_SCK
+  #define MISO_PIN                          PB14  // SPI2_MISO
+  #define MOSI_PIN                          PB15  // SPI2_MOSI
+  #define SD_DETECT_PIN                     PC5
 #endif

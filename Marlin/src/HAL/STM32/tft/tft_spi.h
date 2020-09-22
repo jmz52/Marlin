@@ -40,6 +40,12 @@
 #define DATASIZE_16BIT   SPI_DATASIZE_16BIT
 #define TFT_IO TFT_SPI
 
+#ifdef STM32F1xx
+  #define __IS_DMA_ENABLED(__HANDLE__)      ((__HANDLE__)->Instance->CCR & DMA_CCR_EN)
+#elif defined(STM32F4xx)
+  #define __IS_DMA_ENABLED(__HANDLE__)      ((__HANDLE__)->Instance->CR & DMA_SxCR_EN)
+#endif
+
 class TFT_SPI {
 private:
   static SPI_HandleTypeDef SPIx;

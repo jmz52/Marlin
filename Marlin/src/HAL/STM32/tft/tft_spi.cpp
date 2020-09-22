@@ -81,23 +81,38 @@ void TFT_SPI::Init() {
   #ifdef SPI1_BASE
     if (SPIx.Instance == SPI1) {
       __HAL_RCC_SPI1_CLK_ENABLE();
-      __HAL_RCC_DMA1_CLK_ENABLE();
       SPIx.Init.BaudRatePrescaler  = SPI_BAUDRATEPRESCALER_4;
-      DMAtx.Instance = DMA1_Channel3;
+      #ifdef STM32F1xx
+      __HAL_RCC_DMA1_CLK_ENABLE();
+        DMAtx.Instance = DMA1_Channel3;
+      #elif defined(STM32F4xx)
+      __HAL_RCC_DMA2_CLK_ENABLE();
+        DMAtx.Instance = DMA2_Stream3; // DMA2_Stream5
+      #endif
     }
   #endif
   #ifdef SPI2_BASE
     if (SPIx.Instance == SPI2) {
       __HAL_RCC_SPI2_CLK_ENABLE();
-      __HAL_RCC_DMA1_CLK_ENABLE();
-      DMAtx.Instance = DMA1_Channel5;
+      #ifdef STM32F1xx
+        __HAL_RCC_DMA1_CLK_ENABLE();
+        DMAtx.Instance = DMA1_Channel5;
+      #elif defined(STM32F4xx)
+        __HAL_RCC_DMA1_CLK_ENABLE();
+        DMAtx.Instance = DMA1_Stream4;
+      #endif
     }
   #endif
   #ifdef SPI3_BASE
     if (SPIx.Instance == SPI3) {
       __HAL_RCC_SPI3_CLK_ENABLE();
+      #ifdef STM32F1xx
       __HAL_RCC_DMA2_CLK_ENABLE();
-      DMAtx.Instance = DMA2_Channel2;
+        DMAtx.Instance = DMA2_Channel2;
+      #elif defined(STM32F4xx)
+      __HAL_RCC_DMA1_CLK_ENABLE();
+        DMAtx.Instance = DMA1_Stream5;  // DMA1_Stream7
+      #endif
     }
   #endif
 
@@ -161,10 +176,10 @@ uint32_t TFT_SPI::ReadID(uint16_t Reg) {
 }
 
 bool TFT_SPI::isBusy() {
-  if (DMAtx.Instance->CCR & DMA_CCR_EN)
+  if (__IS_DMA_ENABLED(&DMAtx))
     if (__HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TC_FLAG_INDEX(&DMAtx)) != 0 || __HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TE_FLAG_INDEX(&DMAtx)) != 0)
       Abort();
-  return DMAtx.Instance->CCR & DMA_CCR_EN;
+  return __IS_DMA_ENABLED(&DMAtx);
 }
 
 void TFT_SPI::Abort() {
@@ -199,10 +214,18 @@ void TFT_SPI::TransmitDMA(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Coun
     SPI_1LINE_TX(&SPIx);
   #endif
 
-  DMAtx.DmaBaseAddress->IFCR = (DMA_ISR_GIF1 << DMAtx.ChannelIndex);
-  DMAtx.Instance->CNDTR = Count;
-  DMAtx.Instance->CPAR = (uint32_t)&(SPIx.Instance->DR);
-  DMAtx.Instance->CMAR = (uint32_t)Data;
+  __HAL_DMA_CLEAR_FLAG(&DMAtx, __HAL_DMA_GET_TC_FLAG_INDEX(&DMAtx));
+  __HAL_DMA_CLEAR_FLAG(&DMAtx, __HAL_DMA_GET_TE_FLAG_INDEX(&DMAtx));
+
+  #ifdef STM32F1xx
+    DMAtx.Instance->CNDTR = Count;
+    DMAtx.Instance->CPAR = (uint32_t)&(SPIx.Instance->DR);
+    DMAtx.Instance->CMAR = (uint32_t)Data;
+  #elif defined(STM32F4xx)
+    DMAtx.Instance->NDTR = Count;
+    DMAtx.Instance->PAR = (uint32_t)&(SPIx.Instance->DR);
+    DMAtx.Instance->M0AR = (uint32_t)Data;
+  #endif
   __HAL_DMA_ENABLE(&DMAtx);
   __HAL_SPI_ENABLE(&SPIx);
 

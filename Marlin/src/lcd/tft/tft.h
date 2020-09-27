@@ -111,3 +111,12 @@ class TFT {
 };
 
 extern TFT tft;
+
+#if ENABLED(ADVANCED_PAUSE_FEATURE)
+  void menu_pause_option(); // UI screen function from menu_filament.cpp
+#endif
+
+#if EITHER(PROBE_MANUALLY, MESH_BED_LEVELING)
+  void _lcd_level_bed_moving(); // UI screen function from menu_bed_leveling.cpp
+  void _lcd_level_bed_get_z();  // UI screen function from menu_bed_leveling.cpp
+#endif

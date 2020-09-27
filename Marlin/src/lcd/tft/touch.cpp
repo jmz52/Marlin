@@ -292,6 +292,11 @@ bool MarlinUI::touch_pressed() {
   return touch.is_clicked();
 }
 
+void MarlinUI::use_touch() {
+  if (touch.get_controls_count() == 0)
+    touch.add_control(CLICK, 0, 0, TFT_WIDTH, TFT_HEIGHT);
+}
+
 void add_control(uint16_t x, uint16_t y, TouchControlType control_type, int32_t data, MarlinImage image, bool is_enabled, uint16_t color_enabled, uint16_t color_disabled) {
   uint16_t width = Images[image].width;
   uint16_t height = Images[image].height;

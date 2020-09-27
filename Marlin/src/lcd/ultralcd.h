@@ -703,6 +703,7 @@ private:
       static void tft_idle();
       #if ENABLED(TOUCH_SCREEN)
         static bool touch_pressed();
+        static void use_touch();
       #endif
     #endif
   #endif

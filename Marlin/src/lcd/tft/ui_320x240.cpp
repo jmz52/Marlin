@@ -342,7 +342,7 @@ void MarlinUI::draw_status_screen() {
 
 // Draw a static item with no left-right margin required. Centered by default.
 void MenuItem_static::draw(const uint8_t row, PGM_P const pstr, const uint8_t style/*=SS_DEFAULT*/, const char * const vstr/*=nullptr*/) {
-  menu_item(row);
+  menu_line(row);
   tft_string.set(pstr, itemIndex, itemString);
   if (vstr)
     tft_string.add(vstr);
@@ -420,8 +420,18 @@ void MenuEditItemBase::draw_edit_screen(PGM_P const pstr, const char* const valu
     }
   #endif
 
+  #if EITHER(PROBE_MANUALLY, MESH_BED_LEVELING)
+    // The _lcd_level_bed_moving() function uses MenuEditItemBase::draw_edit_screen to display two line of text.
+    if (ui.currentScreen == _lcd_level_bed_moving)
+      return;
+  #endif
+
   extern screenFunc_t _manual_move_func_ptr;
-  if (ui.currentScreen != _manual_move_func_ptr && !ui.external_control) {
+  if (ui.currentScreen != _manual_move_func_ptr 
+      #if EITHER(PROBE_MANUALLY, MESH_BED_LEVELING)
+        && ui.currentScreen != _lcd_level_bed_get_z
+      #endif
+      && !ui.external_control) {
 
     #define SLIDER_LENGHT 224
     #define SLIDER_Y_POSITION 140
@@ -632,22 +642,24 @@ void MenuItem_confirm::draw_select_screen(PGM_P const yes, PGM_P const no, const
 #endif // TOUCH_SCREEN_CALIBRATION
 
 void menu_line(const uint8_t row, uint16_t color) {
+  #if ENABLED(TOUCH_SCREEN)
+    static uint8_t last_row = 0;
+    if (row <= last_row)
+      touch.clear();
+    last_row = row;
+  #endif
+
   tft.canvas(0, 2 + 34 * row, TFT_WIDTH, 32);
   tft.set_background(color);
 }
 
-void menu_pause_option();
-
-void menu_item(const uint8_t row, bool sel ) {
-  #if ENABLED(TOUCH_SCREEN)
-    if (row == 0) {
-      touch.clear();
-      draw_menu_navigation = TERN(ADVANCED_PAUSE_FEATURE, ui.currentScreen != menu_pause_option, true);
-    }
-  #endif
-
+void menu_item(const uint8_t row, bool sel) {
   menu_line(row, sel ? COLOR_SELECTION_BG : COLOR_BACKGROUND);
-  TERN_(TOUCH_SCREEN, touch.add_control(sel ? CLICK : MENU_ITEM, 0, 2 + 34 * row, 320, 32, encoderTopLine + row));
+
+  #if ENABLED(TOUCH_SCREEN)
+    touch.add_control(sel ? CLICK : MENU_ITEM, 0, 2 + 34 * row, TFT_WIDTH, 32, encoderTopLine + row);
+    draw_menu_navigation = TERN(ADVANCED_PAUSE_FEATURE, ui.currentScreen != menu_pause_option, true);
+  #endif
 }
 
 void MarlinUI::move_axis_screen() {

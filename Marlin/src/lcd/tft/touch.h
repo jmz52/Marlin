@@ -163,6 +163,7 @@ class Touch {
     static void init();
     static void reset() { controls_count = 0; touch_time = -1; current_control = NULL; }
     static void clear() { controls_count = 0; }
+    static uint16_t get_controls_count() { return controls_count; }
     static void idle();
     static bool is_clicked() { return touch_control_type == CLICK; }
     static void disable() { enabled = false; }

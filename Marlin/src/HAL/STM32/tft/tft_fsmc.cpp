@@ -181,7 +181,6 @@ void TFT_FSMC::TransmitDMA(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Cou
    * FSMC uses DMA2_Channel1 and SDIO uses DMA2_Channel4
    * DMA controller can only handle them one by one.
    */
-  #define GD32
   TERN_(GD32, while (isBusy()));
 }
 

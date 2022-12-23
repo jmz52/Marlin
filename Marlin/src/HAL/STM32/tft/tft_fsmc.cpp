@@ -174,6 +174,15 @@ void TFT_FSMC::TransmitDMA(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Cou
   DMAtx.Init.PeriphInc = MemoryIncrease;
   HAL_DMA_Init(&DMAtx);
   HAL_DMA_Start(&DMAtx, (uint32_t)Data, (uint32_t)&(LCD->RAM), Count);
+  
+  /**
+   * Unsupported GD32F303VET6 MCU used in KingRoon KP3 board can't handle simultaneous DMA data transfers.
+   * Attempts to print from SD card causes repeating "SD read error" and hang TFT screen 
+   * FSMC uses DMA2_Channel1 and SDIO uses DMA2_Channel4
+   * DMA controller can only handle them one by one.
+   */
+  #define GD32
+  TERN_(GD32, while (isBusy()));
 }
 
 void TFT_FSMC::Transmit(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Count) {

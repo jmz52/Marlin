@@ -70,12 +70,12 @@ void MarlinUI::tft_idle() {
     #if ENABLED(BOOT_MARLIN_LOGO_SMALL)
       #define BOOT_LOGO_W 195   // MarlinLogo195x59x16
       #define BOOT_LOGO_H  59
-      #define SITE_URL_Y (TFT_HEIGHT - 46)
+      #define SITE_URL_Y (TFT_HEIGHT - 48)
       tft.set_background(COLOR_BACKGROUND);
     #else
       #define BOOT_LOGO_W TFT_WIDTH   // MarlinLogo320x240x16
       #define BOOT_LOGO_H TFT_HEIGHT
-      #define SITE_URL_Y (TFT_HEIGHT - 52)
+      #define SITE_URL_Y (TFT_HEIGHT - 54)
     #endif
     tft.add_image((TFT_WIDTH - BOOT_LOGO_W) / 2, (TFT_HEIGHT - BOOT_LOGO_H) / 2, imgBootScreen);
     #ifdef WEBSITE_URL
@@ -97,19 +97,19 @@ void MarlinUI::draw_kill_screen() {
   tft.queue.reset();
   tft.fill(0, 0, TFT_WIDTH, TFT_HEIGHT, COLOR_KILL_SCREEN_BG);
 
-  tft.canvas(0, 60, TFT_WIDTH, 20);
+  tft.canvas(0, 60, TFT_WIDTH, 24);
   tft.set_background(COLOR_KILL_SCREEN_BG);
   tft_string.set(status_message);
   tft_string.trim();
   tft.add_text(tft_string.center(TFT_WIDTH), 0, COLOR_KILL_SCREEN_TEXT, tft_string);
 
-  tft.canvas(0, 120, TFT_WIDTH, 20);
+  tft.canvas(0, 120, TFT_WIDTH, 24);
   tft.set_background(COLOR_KILL_SCREEN_BG);
   tft_string.set(GET_TEXT(MSG_HALTED));
   tft_string.trim();
   tft.add_text(tft_string.center(TFT_WIDTH), 0, COLOR_KILL_SCREEN_TEXT, tft_string);
 
-  tft.canvas(0, 160, TFT_WIDTH, 20);
+  tft.canvas(0, 160, TFT_WIDTH, 24);
   tft.set_background(COLOR_KILL_SCREEN_BG);
   tft_string.set(GET_TEXT(MSG_PLEASE_RESET));
   tft_string.trim();
@@ -319,7 +319,7 @@ void MarlinUI::draw_status_screen() {
   duration_t elapsed = print_job_timer.duration();
   elapsed.toDigital(buffer);
 
-  tft.canvas(56, 256, 128, 20);
+  tft.canvas(56, 256, 128, 24);
   tft.set_background(COLOR_BACKGROUND);
   tft_string.set(buffer);
   tft.add_text(tft_string.center(128), tft_string.vcenter(24), COLOR_PRINT_TIME, tft_string);
@@ -333,7 +333,7 @@ void MarlinUI::draw_status_screen() {
     tft.add_bar(1, 1, (230 * progress) / 100, 7, COLOR_PROGRESS_BAR);
 
   // status message
-  tft.canvas(0, 296, 240, 20);
+  tft.canvas(0, 296, 240, 24);
   tft.set_background(COLOR_BACKGROUND);
   tft_string.set(status_message);
   tft_string.trim();
@@ -590,24 +590,24 @@ static void quick_feedback() {
 #define CUR_STEP_VALUE_WIDTH 38
 static void drawCurStepValue() {
   tft_string.set(ftostr52sp(motionAxisState.currentStepSize));
-  tft.canvas(motionAxisState.stepValuePos.x, motionAxisState.stepValuePos.y, CUR_STEP_VALUE_WIDTH, 20);
+  tft.canvas(motionAxisState.stepValuePos.x, motionAxisState.stepValuePos.y, CUR_STEP_VALUE_WIDTH, 24);
   tft.set_background(COLOR_BACKGROUND);
   tft.add_text(CUR_STEP_VALUE_WIDTH - tft_string.width(), 0, COLOR_AXIS_HOMED, tft_string);
   tft.queue.sync();
   tft_string.set(F("mm"));
-  tft.canvas(motionAxisState.stepValuePos.x, motionAxisState.stepValuePos.y + 20, CUR_STEP_VALUE_WIDTH, 20);
+  tft.canvas(motionAxisState.stepValuePos.x, motionAxisState.stepValuePos.y + 20, CUR_STEP_VALUE_WIDTH, 24);
   tft.set_background(COLOR_BACKGROUND);
   tft.add_text(CUR_STEP_VALUE_WIDTH - tft_string.width(), 0, COLOR_AXIS_HOMED, tft_string);
 }
 
 static void drawCurZSelection() {
   tft_string.set('Z');
-  tft.canvas(motionAxisState.zTypePos.x, motionAxisState.zTypePos.y, tft_string.width(), 20);
+  tft.canvas(motionAxisState.zTypePos.x, motionAxisState.zTypePos.y, tft_string.width(), 24);
   tft.set_background(COLOR_BACKGROUND);
   tft.add_text(0, 0, Z_BTN_COLOR, tft_string);
   tft.queue.sync();
   tft_string.set(F("Offset"));
-  tft.canvas(motionAxisState.zTypePos.x, motionAxisState.zTypePos.y + 34, tft_string.width(), 20);
+  tft.canvas(motionAxisState.zTypePos.x, motionAxisState.zTypePos.y + 34, tft_string.width(), 24);
   tft.set_background(COLOR_BACKGROUND);
   if (motionAxisState.z_selection == Z_SELECTION_Z_PROBE) {
     tft.add_text(0, 0, Z_BTN_COLOR, tft_string);
@@ -623,9 +623,9 @@ static void drawCurESelection() {
 }
 
 static void drawMessage(PGM_P const msg) {
-  tft.canvas(X_MARGIN, TFT_HEIGHT - 2 * BTN_HEIGHT, TFT_WIDTH - X_MARGIN, 20);
+  tft.canvas(X_MARGIN, TFT_HEIGHT - 2 * BTN_HEIGHT, TFT_WIDTH - X_MARGIN, 24);
   tft.set_background(COLOR_BACKGROUND);
-  tft.add_text(BTN_WIDTH, 0, COLOR_YELLOW, msg);
+  tft.add_text(0, 0, COLOR_YELLOW, msg);
 }
 
 static void drawMessage(FSTR_P const fmsg) { drawMessage(FTOP(fmsg)); }

@@ -1610,7 +1610,7 @@
 #if ANY(HAS_UI_320x240, HAS_UI_480x320, HAS_UI_480x272)
   #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7)   // Fewer lines with touch buttons onscreen
 #elif HAS_UI_240x320
-  #define LCD_HEIGHT TERN(TOUCH_SCREEN, 7, 6)   // Fewer lines with touch buttons onscreen
+  #define LCD_HEIGHT TERN(TOUCH_SCREEN, 8, 6)   // Fewer lines with touch buttons onscreen
 #elif HAS_UI_1024x600
   #define LCD_HEIGHT TERN(TOUCH_SCREEN, 12, 13) // Fewer lines with touch buttons onscreen
 #endif

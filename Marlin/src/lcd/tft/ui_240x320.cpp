@@ -625,7 +625,7 @@ static void drawCurESelection() {
 static void drawMessage(PGM_P const msg) {
   tft.canvas(X_MARGIN, TFT_HEIGHT - 2 * BTN_HEIGHT, TFT_WIDTH - X_MARGIN, 24);
   tft.set_background(COLOR_BACKGROUND);
-  tft.add_text(0, 0, COLOR_YELLOW, msg);
+  tft.add_text(0, 0, COLOR_STATUS_MESSAGE, msg);
 }
 
 static void drawMessage(FSTR_P const fmsg) { drawMessage(FTOP(fmsg)); }
@@ -644,7 +644,7 @@ static void drawAxisValue(const AxisEnum axis) {
     case E_AXIS: pos = motionAxisState.eValuePos; color = E_BTN_COLOR; break;
     default: return;
   }
-  tft.canvas(pos.x, pos.y, BTN_WIDTH + X_MARGIN, 20);
+  tft.canvas(pos.x, pos.y, BTN_WIDTH + X_MARGIN, 24);
   tft.set_background(COLOR_BACKGROUND);
   tft_string.set(ftostr52sp(value));
   tft.add_text(0, 0, color, tft_string);

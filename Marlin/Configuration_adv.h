@@ -1927,6 +1927,14 @@
 #endif
 
 //
+// Specify custom color theme for UI.
+//
+#if ENABLED(TFT_COLOR_UI)
+  // Use black theme
+  #define UI_THEME_BLACK
+#endif
+
+//
 // Touch UI for the FTDI Embedded Video Engine (EVE)
 //
 #if ENABLED(TOUCH_UI_FTDI_EVE)

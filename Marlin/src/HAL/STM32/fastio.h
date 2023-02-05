@@ -67,9 +67,18 @@ void FastIO_init(); // Must be called before using fast io macros
 #define _SET_OUTPUT(IO)         pinMode(IO, OUTPUT)                               //!< Output Push Pull Mode & GPIO_NOPULL
 #define _SET_OUTPUT_OD(IO)      pinMode(IO, OUTPUT_OPEN_DRAIN)
 
-#define WRITE(IO,V)             _WRITE(IO,V)
-#define READ(IO)                _READ(IO)
-#define TOGGLE(IO)              _TOGGLE(IO)
+#ifdef USE_VIRTUAL_IO
+  #include "virtualio.h"
+  #define WRITE(IO,V)           (IS_VIRTUAL_PIN(IO) ? VIRTUAL_WRITE(IO,V) : (void)_WRITE(IO,V))
+  #define READ(IO)              (IS_VIRTUAL_PIN(IO) ? VIRTUAL_READ(IO) : _READ(IO))
+  #define TOGGLE(IO)            (IS_VIRTUAL_PIN(IO) ? VIRTUAL_TOGGLE(IO) : (void)_TOGGLE(IO))
+  #define ANALOG_READ(IO)       (IS_VIRTUAL_PIN(IO) ? VIRTUAL_ADC(IO) : analogRead(IO))
+#else
+  #define WRITE(IO,V)             _WRITE(IO,V)
+  #define READ(IO)                _READ(IO)
+  #define TOGGLE(IO)              _TOGGLE(IO)
+  #define ANALOG_READ(IO)         analogRead(IO)
+#endif
 
 #define OUT_WRITE(IO,V)         do{ _SET_OUTPUT(IO); WRITE(IO,V); }while(0)
 #define OUT_WRITE_OD(IO,V)      do{ _SET_OUTPUT_OD(IO); WRITE(IO,V); }while(0)

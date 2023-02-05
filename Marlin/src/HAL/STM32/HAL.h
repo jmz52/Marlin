@@ -257,7 +257,7 @@ public:
   static void adc_enable(const pin_t pin) { pinMode(pin, INPUT); }
 
   // Begin ADC sampling on the given pin. Called from Temperature::isr!
-  static void adc_start(const pin_t pin) { adc_result = analogRead(pin); }
+  static void adc_start(const pin_t pin) { adc_result = ANALOG_READ(pin); }
 
   // Is the ADC ready for reading?
   static bool adc_ready() { return true; }

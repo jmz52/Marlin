@@ -163,12 +163,13 @@ uint16_t XPT2046::HardwareIO(uint16_t data) {
     SPIx.Instance->TXDR = data;
 
     while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_SR_EOT)) {}
+    data = SPIx.Instance->RXDR;
 
     __HAL_SPI_DISABLE(&SPIx);
     __HAL_SPI_CLEAR_EOTFLAG(&SPIx);
     __HAL_SPI_CLEAR_TXTFFLAG(&SPIx);
 
-    return SPIx.Instance->RXDR;
+    return data;
   #else
     __HAL_SPI_ENABLE(&SPIx);
     while ((SPIx.Instance->SR & SPI_FLAG_TXE) != SPI_FLAG_TXE) {}

@@ -68,7 +68,7 @@ void TFT_SPI::Init() {
     SPIx.Init.MasterSSIdleness           = SPI_MASTER_SS_IDLENESS_00CYCLE;
     SPIx.Init.MasterInterDataIdleness    = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
     SPIx.Init.MasterReceiverAutoSusp     = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-    SPIx.Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+    SPIx.Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_ENABLE;
     SPIx.Init.IOSwap                     = SPI_IO_SWAP_DISABLE;
   #else
     SPIx.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2; // 18 MBit/s for F103, 21 MBit/s for F407, 25 MBit/s for F411
@@ -180,21 +180,20 @@ uint32_t TFT_SPI::ReadID(uint16_t Reg) {
     if (SPIx.Init.Direction == SPI_DIRECTION_1LINE) SPI_1LINE_RX(&SPIx);
 
     #ifdef STM32H7xx
-      SPIx.Init.DataSize = SPI_DATASIZE_32BIT;
-      HAL_SPI_Init(&SPIx);
-      MODIFY_REG(SPIx.Instance->CR2, SPI_CR2_TSIZE, 4);
-      __HAL_SPI_ENABLE(&SPIx);
-      SET_BIT(SPIx.Instance->CR1, SPI_CR1_CSTART);
+      for (uint32_t i = 0; i < 4; i++) {
+        MODIFY_REG(SPIx.Instance->CR2, SPI_CR2_TSIZE, 1);
+        __HAL_SPI_ENABLE(&SPIx);
+        SET_BIT(SPIx.Instance->CR1, SPI_CR1_CSTART);
 
-      #if TFT_MISO_PIN != TFT_MOSI_PIN
-        SPIx.Instance->TXDR = 0;
-      #endif
-      while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_EOT)) {}
-      Data = SPIx.Instance->RXDR;
-
-      __HAL_SPI_DISABLE(&SPIx);
-      __HAL_SPI_CLEAR_EOTFLAG(&SPIx);
-      __HAL_SPI_CLEAR_TXTFFLAG(&SPIx);   
+        #if TFT_MISO_PIN != TFT_MOSI_PIN
+          SPIx.Instance->TXDR = 0;
+        #endif
+        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_EOT)) {}
+        Data = (Data << 8) | SPIx.Instance->RXDR;
+        __HAL_SPI_DISABLE(&SPIx);
+        __HAL_SPI_CLEAR_EOTFLAG(&SPIx);
+        __HAL_SPI_CLEAR_TXTFFLAG(&SPIx);   
+      }
     #else
       __HAL_SPI_ENABLE(&SPIx);
       for (uint32_t i = 0; i < 4; i++) {

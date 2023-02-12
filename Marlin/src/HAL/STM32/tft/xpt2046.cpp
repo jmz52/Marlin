@@ -72,7 +72,7 @@ void XPT2046::Init() {
       SPIx.Init.MasterSSIdleness           = SPI_MASTER_SS_IDLENESS_00CYCLE;
       SPIx.Init.MasterInterDataIdleness    = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
       SPIx.Init.MasterReceiverAutoSusp     = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-      SPIx.Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+      SPIx.Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_ENABLE;
       SPIx.Init.IOSwap                     = SPI_IO_SWAP_DISABLE;
     #else
       SPIx.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; // 4.5 MBit/s for F103 and 5.25 MBit/s for F407

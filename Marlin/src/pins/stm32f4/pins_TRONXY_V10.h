@@ -187,7 +187,17 @@
 //#define POWER_LM393_PIN                   PE0   // +V for the LM393 comparator, configured as output high
 
 #if ENABLED(TFT_TRONXY_X5SA)
-  #error "TFT_TRONXY_X5SA is not yet supported."
+  //#error "TFT_TRONXY_X5SA is not yet supported."
+  #define TFT_RESET_PIN                       PB12
+  #define TFT_BACKLIGHT_PIN                   PG8
+
+  #define TFT_CS_PIN                          PG12
+  #define TFT_RS_PIN                          PG2
+
+  #define TOUCH_CS_PIN                        PD11
+  #define TOUCH_SCK_PIN                       PB13  // SPI2_SCK
+  #define TOUCH_MISO_PIN                      PB14  // SPI2_MISO
+  #define TOUCH_MOSI_PIN                      PB15  // SPI2_MOSI
 #endif
 
 #if 0

@@ -64,8 +64,8 @@ public:
   static void abort();
 
   static void dataTransferBegin(uint16_t dataWidth=DATASIZE_16BIT);
-  //static void dataTransferEnd() { WRITE(TFT_CS_PIN, HIGH); };
-  static void dataTransferEnd() { WRITE(TFT_CS_PIN, HIGH); __HAL_SPI_DISABLE(&SPIx); };
+  static void dataTransferEnd() { WRITE(TFT_CS_PIN, HIGH); };
+  //static void dataTransferEnd() { WRITE(TFT_CS_PIN, HIGH); __HAL_SPI_DISABLE(&SPIx); };
   static void dataTransferAbort();
 
   static void writeData(uint16_t data) { transmit(data); }

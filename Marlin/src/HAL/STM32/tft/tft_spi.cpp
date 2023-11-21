@@ -193,34 +193,46 @@ uint32_t TFT_SPI::getID() {
 }
 
 uint32_t TFT_SPI::readID(const uint16_t inReg) {
-  uint32_t Data = 0;
+  uint32_t data = 0;
   #if PIN_EXISTS(TFT_MISO)
-    uint32_t BaudRatePrescaler = SPIx.Init.BaudRatePrescaler;
-    uint32_t i;
+    REMEMBER(oldPS, SPIx.Init.BaudRatePrescaler, SPI_BAUDRATEPRESCALER_64);
+    //REMEMBER(oldPS, SPIx.Init.BaudRatePrescaler, SPIx.Instance == SPI1 ? SPI_BAUDRATEPRESCALER_8 : SPI_BAUDRATEPRESCALER_4);
 
-    SPIx.Init.BaudRatePrescaler = SPIx.Instance == SPI1 ? SPI_BAUDRATEPRESCALER_8 : SPI_BAUDRATEPRESCALER_4;
     dataTransferBegin(DATASIZE_8BIT);
     writeReg(inReg);
 
     if (SPIx.Init.Direction == SPI_DIRECTION_1LINE) SPI_1LINE_RX(&SPIx);
-    __HAL_SPI_ENABLE(&SPIx);
 
-    for (i = 0; i < 4; i++) {
-      if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) {
-        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE)) {}
-        SPIx.Instance->DR = 0;
+    #ifdef STM32H7xx
+      for (uint32_t i = 0; i < 4; i++) {
+        MODIFY_REG(SPIx.Instance->CR2, SPI_CR2_TSIZE, 1);
+        __HAL_SPI_ENABLE(&SPIx);
+        SET_BIT(SPIx.Instance->CR1, SPI_CR1_CSTART);
+
+        if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) SPIx.Instance->TXDR = 0;
+        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_EOT));
+        data = (data << 8) | SPIx.Instance->RXDR;
+        __HAL_SPI_DISABLE(&SPIx);
+        __HAL_SPI_CLEAR_EOTFLAG(&SPIx);
+        __HAL_SPI_CLEAR_TXTFFLAG(&SPIx);
       }
-      while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_RXNE)) {}
-      Data = (Data << 8) | SPIx.Instance->DR;
-    }
+    #else
+      __HAL_SPI_ENABLE(&SPIx);
+      for (uint32_t i = 0; i < 4; i++) {
+        if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) {
+          while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE));
+          SPIx.Instance->DR = 0;
+        }
+        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_RXNE));
+        data = (data << 8) | SPIx.Instance->DR;
+      }
+    #endif
 
-    __HAL_SPI_DISABLE(&SPIx);
     dataTransferEnd();
-
-    SPIx.Init.BaudRatePrescaler   = BaudRatePrescaler;
   #endif
 
-  return Data >> 7;
+  DEBUG_ECHOLNPGM("  raw data : ", data);
+  return data >> 7;
 }
 
 bool TFT_SPI::isBusy() {

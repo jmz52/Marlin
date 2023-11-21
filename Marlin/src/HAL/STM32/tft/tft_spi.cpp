@@ -240,8 +240,8 @@ bool TFT_SPI::isBusy() {
 
 void TFT_SPI::abort() {
   // Wait for any running spi
-  while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE)) {}
-  while ( __HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY)) {}
+  while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE));
+  while ( __HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY));
   // First, abort any running dma
   HAL_DMA_Abort(&DMAtx);
   // DeInit objects
@@ -251,18 +251,29 @@ void TFT_SPI::abort() {
   dataTransferEnd();
 }
 
-void TFT_SPI::transmit(uint16_t Data) {
+void TFT_SPI::transmit(uint16_t data) {
   if (SPIx.Init.Direction == SPI_DIRECTION_1LINE) SPI_1LINE_TX(&SPIx);
 
-  __HAL_SPI_ENABLE(&SPIx);
+  #ifdef STM32H7xx
+    MODIFY_REG(SPIx.Instance->CR2, SPI_CR2_TSIZE, 1);
+    __HAL_SPI_ENABLE(&SPIx);
+    SET_BIT(SPIx.Instance->CR1, SPI_CR1_CSTART);
 
-  SPIx.Instance->DR = Data;
+    SPIx.Instance->TXDR = data;
 
-  while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE)) {}
-  while ( __HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY)) {}
+    while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_SR_EOT));
 
-  if (TFT_MISO_PIN != TFT_MOSI_PIN)
-    __HAL_SPI_CLEAR_OVRFLAG(&SPIx);   // Clear overrun flag in 2 Lines communication mode because received is not read
+    __HAL_SPI_CLEAR_EOTFLAG(&SPIx);
+    __HAL_SPI_CLEAR_TXTFFLAG(&SPIx);
+    __HAL_SPI_DISABLE(&SPIx);
+  #else
+    __HAL_SPI_ENABLE(&SPIx);
+    SPIx.Instance->DR = data;
+    while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE)); // Wait for data transfer to actually start
+    while (__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY));  // Wait until SPI is idle
+  #endif
+
+  if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) __HAL_SPI_CLEAR_OVRFLAG(&SPIx); // Clear overrun flag in 2 Lines communication mode because received is not read
 }
 
 void TFT_SPI::transmitDMA(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Count) {

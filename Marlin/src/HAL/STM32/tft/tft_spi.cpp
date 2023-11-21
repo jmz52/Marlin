@@ -47,8 +47,8 @@ void TFT_SPI::init() {
   if ((spiInstance = (SPI_TypeDef *)pinmap_peripheral(digitalPinToPinName(TFT_SCK_PIN),  PinMap_SPI_SCLK)) == NP) return;
   if (spiInstance != (SPI_TypeDef *)pinmap_peripheral(digitalPinToPinName(TFT_MOSI_PIN), PinMap_SPI_MOSI)) return;
 
-  #if PIN_EXISTS(TFT_MISO) && TFT_MISO_PIN != TFT_MOSI_PIN
-    if (spiInstance != (SPI_TypeDef *)pinmap_peripheral(digitalPinToPinName(TFT_MISO_PIN), PinMap_SPI_MISO)) return;
+  #if PIN_EXISTS(TFT_MISO)
+    if ((TFT_MISO_PIN != TFT_MOSI_PIN) && (spiInstance != (SPI_TypeDef *)pinmap_peripheral(digitalPinToPinName(TFT_MISO_PIN), PinMap_SPI_MISO))) return;
   #endif
 
   SPIx.Instance                = spiInstance;
@@ -80,10 +80,11 @@ void TFT_SPI::init() {
 
   pinmap_pinout(digitalPinToPinName(TFT_SCK_PIN), PinMap_SPI_SCLK);
   pinmap_pinout(digitalPinToPinName(TFT_MOSI_PIN), PinMap_SPI_MOSI);
-  #if PIN_EXISTS(TFT_MISO) && TFT_MISO_PIN != TFT_MOSI_PIN
-    pinmap_pinout(digitalPinToPinName(TFT_MISO_PIN), PinMap_SPI_MISO);
+  #if PIN_EXISTS(TFT_MISO)
+    if (TFT_MISO_PIN != TFT_MOSI_PIN) pinmap_pinout(digitalPinToPinName(TFT_MISO_PIN), PinMap_SPI_MISO);
   #endif
-  pin_PullConfig(get_GPIO_Port(STM_PORT(digitalPinToPinName(TFT_SCK_PIN))), STM_LL_GPIO_PIN(digitalPinToPinName(TFT_SCK_PIN)), GPIO_PULLDOWN);
+
+  //pin_PullConfig(get_GPIO_Port(STM_PORT(digitalPinToPinName(TFT_SCK_PIN))), STM_LL_GPIO_PIN(digitalPinToPinName(TFT_SCK_PIN)), GPIO_PULLDOWN);
 
   #ifdef SPI1_BASE
     if (SPIx.Instance == SPI1) {
@@ -139,8 +140,6 @@ void TFT_SPI::init() {
     }
   #endif
 
-  // HAL_SPI_Init(&SPIx); // not in 2.1.1
-
   DMAtx.Init.Direction = DMA_MEMORY_TO_PERIPH;
   DMAtx.Init.PeriphInc = DMA_PINC_DISABLE;
   DMAtx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
@@ -158,37 +157,56 @@ void TFT_SPI::dataTransferBegin(uint16_t dataSize) {
   WRITE(TFT_CS_PIN, LOW);
 }
 
-#ifdef TFT_DEFAULT_DRIVER
-  #include "../../../lcd/tft_io/tft_ids.h"
-#endif
+#include "../../../lcd/tft_io/tft_ids.h"
+
+inline bool known_tft_id(const uint32_t &id) {
+  switch (id & 0xFFFF) {
+    case LTDC_RGB:
+    case SSD1963:
+    case ST7735:
+    case ST7789:
+    case ST7796:
+    case R61505:
+    case ILI9328:
+    case ILI9341:
+    case ILI9488:
+    case ILI9488_ID1:
+      return true;
+    default:
+      return false;
+  }
+}
 
 uint32_t TFT_SPI::getID() {
-  uint32_t id;
-  id = readID(LCD_READ_ID);
+  DEBUG_ECHOLNPGM("TFT_SPI::getID()");
+
+  uint32_t id = readID(LCD_READ_ID);
   #if ENABLED(DEBUG_TFT_IO)
     char debug_register[3], debug_value[5];
     sprintf_P(debug_register, PSTR("%02X"), LCD_READ_ID);
     sprintf_P(debug_value, PSTR("%04X"), uint16_t(id));
     DEBUG_ECHOLNPGM("  readID(0x", debug_register, ") : 0x", debug_value);
   #endif
-  if ((id & 0xFFFF) == 0 || (id & 0xFFFF) == 0xFFFF) {
+
+  if (!known_tft_id(id)) {
     id = readID(LCD_READ_ID4);
     #if ENABLED(DEBUG_TFT_IO)
       sprintf_P(debug_register, PSTR("%02X"), LCD_READ_ID4);
       sprintf_P(debug_value, PSTR("%04X"), uint16_t(id));
       DEBUG_ECHOLNPGM("  readID(0x", debug_register, ") : 0x", debug_value);
     #endif
-
-    #ifdef TFT_DEFAULT_DRIVER
-      if ((id & 0xFFFF) == 0 || (id & 0xFFFF) == 0xFFFF) {
-        id = TFT_DEFAULT_DRIVER;
-        #if ENABLED(DEBUG_TFT_IO)
-          sprintf_P(debug_value, PSTR("%04X"), uint16_t(id));
-          DEBUG_ECHOLNPGM("  Fallback to TFT_DEFAULT_DRIVER : 0x", debug_value);
-        #endif
-      }
-    #endif
   }
+
+  #ifdef TFT_DEFAULT_DRIVER
+    if (!known_tft_id(id)) {
+      id = TFT_DEFAULT_DRIVER;
+      #if ENABLED(DEBUG_TFT_IO)
+        sprintf_P(debug_value, PSTR("%04X"), uint16_t(id));
+        DEBUG_ECHOLNPGM("  Fallback to TFT_DEFAULT_DRIVER : 0x", debug_value);
+      #endif
+    }
+  #endif
+
   return id;
 }
 
@@ -210,7 +228,7 @@ uint32_t TFT_SPI::readID(const uint16_t inReg) {
         SET_BIT(SPIx.Instance->CR1, SPI_CR1_CSTART);
 
         if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) SPIx.Instance->TXDR = 0;
-        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_EOT));
+        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_EOT)) {}
         data = (data << 8) | SPIx.Instance->RXDR;
         __HAL_SPI_DISABLE(&SPIx);
         __HAL_SPI_CLEAR_EOTFLAG(&SPIx);
@@ -220,10 +238,10 @@ uint32_t TFT_SPI::readID(const uint16_t inReg) {
       __HAL_SPI_ENABLE(&SPIx);
       for (uint32_t i = 0; i < 4; i++) {
         if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) {
-          while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE));
+          while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE)) {}
           SPIx.Instance->DR = 0;
         }
-        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_RXNE));
+        while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_RXNE)) {}
         data = (data << 8) | SPIx.Instance->DR;
       }
     #endif
@@ -236,31 +254,52 @@ uint32_t TFT_SPI::readID(const uint16_t inReg) {
 }
 
 bool TFT_SPI::isBusy() {
-  #if defined(STM32F1xx)
-    volatile bool dmaEnabled = (DMAtx.Instance->CCR & DMA_CCR_EN) != RESET;
+  #ifdef STM32F1xx
+    #define __IS_DMA_ENABLED(__HANDLE__)      ((__HANDLE__)->Instance->CCR & DMA_CCR_EN)
+    #define __IS_DMA_CONFIGURED(__HANDLE__)   ((__HANDLE__)->Instance->CPAR != 0)
   #elif defined(STM32F4xx)
-    volatile bool dmaEnabled = DMAtx.Instance->CR & DMA_SxCR_EN;
+    #define __IS_DMA_ENABLED(__HANDLE__)      ((__HANDLE__)->Instance->CR & DMA_SxCR_EN)
+    #define __IS_DMA_CONFIGURED(__HANDLE__)   ((__HANDLE__)->Instance->PAR != 0)
+  #elif defined(STM32H7xx)
+    #define __IS_DMA_ENABLED(__HANDLE__)      (((DMA_Stream_TypeDef *)((__HANDLE__)->Instance))->CR & DMA_SxCR_EN)
+    #define __IS_DMA_CONFIGURED(__HANDLE__)   (((DMA_Stream_TypeDef *)((__HANDLE__)->Instance))->PAR != 0)
   #endif
-  if (dmaEnabled) {
-    if (__HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TC_FLAG_INDEX(&DMAtx)) != 0 || __HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TE_FLAG_INDEX(&DMAtx)) != 0)
-      abort();
+
+  if (!__IS_DMA_CONFIGURED(&DMAtx)) return false;
+
+  if (__HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TE_FLAG_INDEX(&DMAtx))) {
+    // You should not be here - DMA transfer error flag is set
+    // Abort DMA transfer and release SPI
   }
-  else
-    abort();
-  return dmaEnabled;
+  else {
+    // Check if DMA transfer completed flag is set
+    if (__HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TC_FLAG_INDEX(&DMAtx)) == 0) return true;
+    #ifdef STM32H7xx
+      // Check if SPI data transfer is completed
+      if (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_EOT)) return true;
+    #else
+      // Check if SPI transmit butter is empty and SPI is idle
+      if ((!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE)) || (__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY))) return true;
+    #endif
+  }
+
+  abort();
+  return false;
 }
 
 void TFT_SPI::abort() {
-  // Wait for any running spi
-  while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE));
-  while ( __HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY));
-  // First, abort any running dma
-  HAL_DMA_Abort(&DMAtx);
-  // DeInit objects
+  HAL_DMA_Abort(&DMAtx);  // Abort DMA transfer if any
   HAL_DMA_DeInit(&DMAtx);
-  HAL_SPI_DeInit(&SPIx);
-  // Deselect CS
-  dataTransferEnd();
+
+  #ifdef STM32H7xx
+    CLEAR_BIT(SPIx.Instance->CFG1, SPI_CFG1_TXDMAEN);
+    __HAL_SPI_CLEAR_EOTFLAG(&SPIx);
+    __HAL_SPI_CLEAR_TXTFFLAG(&SPIx);
+  #else
+    CLEAR_BIT(SPIx.Instance->CR2, SPI_CR2_TXDMAEN);
+  #endif
+
+  dataTransferEnd();  // Stop SPI and deselect CS
 }
 
 void TFT_SPI::transmit(uint16_t data) {
@@ -285,26 +324,45 @@ void TFT_SPI::transmit(uint16_t data) {
     while (__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY));  // Wait until SPI is idle
   #endif
 
-  if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) __HAL_SPI_CLEAR_OVRFLAG(&SPIx); // Clear overrun flag in 2 Lines communication mode because received is not read
+  if (SPIx.Init.Direction == SPI_DIRECTION_2LINES) __HAL_SPI_CLEAR_OVRFLAG(&SPIx); // Clear overrun flag in 2 Lines communication mode because received data is not read
 }
 
-void TFT_SPI::transmitDMA(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Count) {
-  // Wait last dma finish, to start another
-  while (isBusy()) { /* nada */ }
-
-  DMAtx.Init.MemInc = MemoryIncrease;
+void TFT_SPI::transmitDMA(uint32_t memoryIncrease, uint16_t *data, uint16_t count) {
+  DMAtx.Init.MemInc = memoryIncrease;
   HAL_DMA_Init(&DMAtx);
 
-  if (TFT_MISO_PIN == TFT_MOSI_PIN) SPI_1LINE_TX(&SPIx);
+  if (SPIx.Init.Direction == SPI_DIRECTION_1LINE) SPI_1LINE_TX(&SPIx);
 
   dataTransferBegin();
 
-  HAL_DMA_Start(&DMAtx, (uint32_t)Data, (uint32_t)&(SPIx.Instance->DR), Count);
-  __HAL_SPI_ENABLE(&SPIx);
+  #ifdef STM32H7xx
+    HAL_DMA_Start(&DMAtx, (uint32_t)data, (uint32_t)&(SPIx.Instance->TXDR), count);
 
-  SET_BIT(SPIx.Instance->CR2, SPI_CR2_TXDMAEN);   // Enable Tx DMA Request
+    CLEAR_BIT(SPIx.Instance->CFG1, SPI_CFG1_TXDMAEN);
+    MODIFY_REG(SPIx.Instance->CR2, SPI_CR2_TSIZE, count);
+    SET_BIT(SPIx.Instance->CFG1, SPI_CFG1_TXDMAEN);   // Enable Tx DMA Request
+    __HAL_SPI_ENABLE(&SPIx);
+    SET_BIT(SPIx.Instance->CR1, SPI_CR1_CSTART);
+  #else
+    HAL_DMA_Start(&DMAtx, (uint32_t)data, (uint32_t)&(SPIx.Instance->DR), count);
+
+    __HAL_SPI_ENABLE(&SPIx);
+    SET_BIT(SPIx.Instance->CR2, SPI_CR2_TXDMAEN);   // Enable Tx DMA Request
+  #endif
+
+  TERN_(TFT_SHARED_IO, while (isBusy()));
+}
+
+void TFT_SPI::transmit(uint32_t memoryIncrease, uint16_t *data, uint16_t count) {
+  transmitDMA(memoryIncrease, data, count);
 
   HAL_DMA_PollForTransfer(&DMAtx, HAL_DMA_FULL_TRANSFER, HAL_MAX_DELAY);
+  #ifdef STM32H7xx
+    while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_SR_EOT)) {}
+  #else
+    while (!__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_TXE)) {}
+    while (__HAL_SPI_GET_FLAG(&SPIx, SPI_FLAG_BSY)) {}
+  #endif
   abort();
 }
 
@@ -314,8 +372,7 @@ void TFT_SPI::transmitDMA(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Coun
     DMAtx.Init.MemInc = memoryIncrease;
     HAL_DMA_Init(&DMAtx);
 
-    if (TFT_MISO_PIN == TFT_MOSI_PIN)
-      SPI_1LINE_TX(&SPIx);
+    if (SPIx.Init.Direction == SPI_DIRECTION_1LINE) SPI_1LINE_TX(&SPIx);
 
     dataTransferBegin();
 
